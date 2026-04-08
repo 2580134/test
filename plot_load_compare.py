@@ -12,6 +12,28 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+
+def configure_chinese_font() -> str | None:
+    """配置 matplotlib 中文字体，返回命中的字体名。"""
+    candidates = [
+        "Microsoft YaHei",
+        "SimHei",
+        "Noto Sans CJK SC",
+        "Noto Sans SC",
+        "WenQuanYi Zen Hei",
+        "PingFang SC",
+        "Source Han Sans SC",
+        "Arial Unicode MS",
+    ]
+    available = {f.name for f in font_manager.fontManager.ttflist}
+    for name in candidates:
+        if name in available:
+            plt.rcParams["font.sans-serif"] = [name] + list(plt.rcParams.get("font.sans-serif", []))
+            plt.rcParams["axes.unicode_minus"] = False
+            return name
+    return None
 
 
 def read_series(xlsx_path: Path, sheet_name: str, key_col_idx: int, key_name: str) -> tuple[list[str], list[float]]:
@@ -54,6 +76,7 @@ def main() -> None:
     parser.add_argument("--actual-file", default="披露数据4.2更新/信息披露查询实际信息(2026-04-01).xlsx")
     parser.add_argument("--output", default="统调负荷_预测_vs_实际.png")
     args = parser.parse_args()
+    selected_font = configure_chinese_font()
 
     times, pred_series = read_series(
         Path(args.pred_file),
@@ -87,7 +110,13 @@ def main() -> None:
 
     output = Path(args.output)
     plt.savefig(output, dpi=180)
-    print(f"已生成PNG图表: {output}")
+    if selected_font:
+        print(f"已生成PNG图表: {output}（中文字体: {selected_font}）")
+    else:
+        print(
+            "已生成PNG图表: "
+            f"{output}（未检测到常见中文字体，请安装如 Noto Sans CJK SC / Microsoft YaHei / SimHei）"
+        )
 
 
 if __name__ == "__main__":
