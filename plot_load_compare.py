@@ -77,6 +77,7 @@ def main() -> None:
     parser.add_argument("--output", default="统调负荷_预测_vs_实际.png")
     args = parser.parse_args()
     selected_font = configure_chinese_font()
+    use_zh = selected_font is not None
 
     times, pred_series = read_series(
         Path(args.pred_file),
@@ -93,17 +94,23 @@ def main() -> None:
     )
 
     plt.figure(figsize=(16, 7))
-    plt.plot(times, pred_series, linestyle="--", linewidth=2, label="预测统调负荷")
-    plt.plot(times, actual_series, linestyle="-", linewidth=2, label="实际统调负荷")
+    pred_label = "预测统调负荷" if use_zh else "Forecast Load"
+    actual_label = "实际统调负荷" if use_zh else "Actual Load"
+    title = "市场披露统调负荷：预测 vs 实际" if use_zh else "Disclosed System Load: Forecast vs Actual"
+    xlabel = "时间（15分钟）" if use_zh else "Time (15-min)"
+    ylabel = "负荷 (MW)" if use_zh else "Load (MW)"
+
+    plt.plot(times, pred_series, linestyle="--", linewidth=2, label=pred_label)
+    plt.plot(times, actual_series, linestyle="-", linewidth=2, label=actual_label)
 
     tick_idx = list(range(0, len(times), 8))
     if tick_idx[-1] != len(times) - 1:
         tick_idx.append(len(times) - 1)
     plt.xticks([times[i] for i in tick_idx], rotation=45)
 
-    plt.title("市场披露统调负荷：预测 vs 实际")
-    plt.xlabel("时间（15分钟）")
-    plt.ylabel("负荷 (MW)")
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.grid(alpha=0.25)
     plt.legend()
     plt.tight_layout()
