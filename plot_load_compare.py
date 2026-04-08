@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -31,7 +32,17 @@ def read_series(xlsx_path: Path, sheet_name: str, key_col_idx: int, key_name: st
             continue
         key = "" if len(row) <= key_col_idx or row[key_col_idx] is None else str(row[key_col_idx]).strip()
         if key == key_name:
-            vals = [float(row[i]) for i in range(2, 98)]
+            vals: list[float] = []
+            for i in range(2, 98):
+                cell = row[i] if i < len(row) else None
+                if cell is None or str(cell).strip() == "":
+                    vals.append(math.nan)
+                    continue
+                try:
+                    vals.append(float(cell))
+                except (TypeError, ValueError):
+                    # 兼容类似 "92,177.8" 的文本数字
+                    vals.append(float(str(cell).replace(",", "").strip()))
             return time_cols, vals
 
     raise ValueError(f"未找到指标: {key_name}")
